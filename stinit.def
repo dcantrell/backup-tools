@@ -1,0 +1,16 @@
+# A compressing DAT (DDS-1-DC or DDS-[234])
+# The modes correspond to the device names:
+#     st0  = mode1
+#     st0l = mode2
+#     st0m = mode3
+#     st0a = mode4
+# See Documentation/scsi/st.txt in the kernel source for more info.
+# Also, the stX devices are rewind-after-operation devices.  The
+# nstX devices are the same except they do not automatically rewind
+# after the operation.
+manufacturer=HP model = "C7438A" {
+can-bsr can-partitions auto-lock
+mode1 blocksize=0 compression=1
+mode2 blocksize=1024 compression=1
+mode3 blocksize=0 compression=0
+mode4 blocksize=1024 compression=0 }
