@@ -1,0 +1,57 @@
+backup
+======
+
+I use an HP DAT 72 tape drive over USB for my local backups.  These scripts
+do full and incremental backups for me.  Improvements welcome.  These are
+really just adjusted as I hit issues.
+
+Requirements
+============
+
+    Linux kernel with SCSI tape support
+    mt-st version 1.1 or higher
+    GNU tar (with 'new' style listed incremental backup support)
+
+Installation
+============
+
+Just copy the files to an appropriate place:
+
+    backup -> /usr/local/sbin/backup
+    backup.conf -> /etc/backup.conf  or  ~/.backuprc
+    stinit.def -> /etc/stinit.def (or add to existing stinit.def)
+
+The 'new-volume' script is written out by 'backup' and goes to $TARDB.  It
+is here for reference purposes only.  The new-volume script is invoked by
+tar for multi volume backup sets.
+
+The backup.conf file is somewhat self-expanatory.  The min and max full
+volume values just indicate how many full backup tape sets you have in
+rotation.  It does not strictly correspond to a single tape.  The backup
+script is set up to span multiple tapes as necessary, but when I first
+started my backups could fit on a single tape.
+
+I recommend a site-wide /etc/backup.conf.  The script also honors ~/.backuprc
+as an override for /etc/backup.conf.  Of course, if you lack the former then
+the rc file in your home directory becomes the main configuration file.
+
+The stinit.def file is required for stinit(8), which is part of mt-st.  The
+mt-st software comes with an example stinit.def file that may work for you.
+The file in this directory works for my tape drive.  Make sure you have an
+stinit.def file for your tape drive.  The backup script runs stinit to ensure
+the tape drive is initialized correctly.
+
+Usage
+=====
+
+For a full backup, run:
+
+    backup --full
+
+Also, full backups are automatically run when $TARDB is lost.  You can always
+force a new full backup with --full.
+
+Run 'backup' with no arguments to perform a regular incremental backup.
+
+-- 
+David Cantrell <david.l.cantrell@gmail.com>
