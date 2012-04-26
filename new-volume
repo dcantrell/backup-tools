@@ -1,12 +1,6 @@
 #!/bin/sh
-echo "Preparing volume $TAR_VOLUME of $TAR_ARCHIVE."
-
-name=$(expr $TAR_ARCHVE : '\(.*\)-.*')
-case $TAR_SUBCOMMAND in
--c)       ;;
--d|-x|-t) test -r ${name:-$TAR_ARCHIVE}-$TAR_VOLUME || exit 1
-          ;;
-*)        exit 1
-esac
-
-echo ${name:-$TAR_ARCHIVE}-$TAR_VOLUME >&$TAR_FD
+mt -f ${TAPEDEV} eject
+echo
+echo -n "Now insert the next tape and press enter..."
+read JUNK
+mt -f ${TAPEDEV} erase 0 && mt -f ${TAPEDEV} rewind
