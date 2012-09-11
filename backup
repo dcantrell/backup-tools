@@ -20,7 +20,7 @@
 # This schedule can scale to an arbitrary number of weeks as necessary.
 #
 # NOTE:  Loss of the listed incremental status file in $TARDB (set in the
-# the .backuprc file) will trigger a new full backup, in which case the
+# the backup.conf file) will trigger a new full backup, in which case the
 # schedule should be altered and the full backup rotation day shifted.
 #
 # BUGS:  1) This script should not be written in shell.
@@ -55,17 +55,16 @@
 # v0.1    04-Mar-2011    Initial revision.
 #
 
-VER="0.6"
+VER="0.7"
 
-# Settings
+# Defaults
 
-if [ ! -r /etc/backup.conf -a ! -r ${HOME}/.backuprc ]; then
-    echo "Missing /etc/backup.conf and ~/.backuprc, cannot continue." >&2
-    exit 1
-fi
+CONFDIR=/etc/backup
+TARDB=/var/db/tar
 
-[ -r /etc/backup.conf ] && . /etc/backup.conf
-[ -r ${HOME}/.backuprc ] && . ${HOME}/.backuprc
+# Common settings
+
+[ -r ${CONFDIR}/backup.conf ] && . ${CONFDIR}/backup.conf
 
 # Create the new volume helper script for GNU tar
 # Comes from the GNU tar manual:
@@ -86,11 +85,36 @@ create_new_volume_script() {
     chmod +x ${nv}
 }
 
+ver() {
+    echo "${PROG} version ${VER}"
+}
+
+usage() {
+    ver
+    echo "Usage: ${PROG} [options]"
+    echo "Options:"
+    echo "    -f, --full            Perform a new full backup."
+    echo "    -d, --delta           Perform a backup of changes since the last full"
+    echo "                          backup."
+    echo "    -s SET, --set SET     Use backup configuration SET."
+    echo "    -D DEV, --device DEV  Use tape device DEV."
+    echo "    -h, --help            Display usage screen."
+    echo "    -V, --version         Display version information."
+    echo
+    echo "The -f and -d options are mutually exclusive, the last one specified takes"
+    echo "precedence."
+    echo
+    echo "The -s option is required.  The backup set configuration should be defined"
+    echo "in ${CONFDIR}/sets/SET.conf.  The -D option is not required but should"
+    echo "either be specified on the command line or in the main"
+    echo "${CONFDIR}/backup.conf file as TAPEDEV."
+}
+
 # Run the tar backup.  Arguments:
-#     $1   type (either Full or Incremental)
+#     $1   type (either Full or Delta)
 #     $2   tape needed (automatically determined, or specify a name)
-#     $3   include list (if empty, uses $BACKUP_INCLUDE
-#     $4   exclude list (if empty, uses $BACKUP_EXCLUDE
+#     $3   include list (if empty, uses $BACKUP_INCLUDE)
+#     $4   exclude list (if empty, uses $BACKUP_EXCLUDE)
 runtar() {
     t="${1}"
     NEEDED_TAPE="${2}"
@@ -114,7 +138,7 @@ runtar() {
 
     echo
     echo "Insert tape \"${t} ${NEEDED_TAPE}\""
-    echo -n "Press Enter to begin ${t} backup for ${STAMP}..."
+    echo -n "Press Enter to begin ${t} backup for ${SET} on ${STAMP}..."
     read JUNK
 
     if [ "${t}" = "Full" ]; then
@@ -156,31 +180,93 @@ runtar() {
 ### MAIN ###
 
 PATH=/bin:/sbin:/usr/bin:/usr/local/bin
-
+PROG="$(basename ${0} 2>/dev/null)"
 STAMP="$(date +%d-%b-%Y)"
-LISTED_INCR="${TARDB}/listed-incremental.$(hostname)"
-CURR_INCR_TAPE="${TARDB}/curr_incremental_tape"
-CURR_FULL_TAPE="${TARDB}/curr_full_tape"
+TYPE=
+SET=
 
 if [ $(id -u) -ne 0 ]; then
-    cho "You must be root to perform useful backups." >&2
+    echo "You must be root to perform useful backups." >&2
     exit 1
 fi
 
-if [ ! -r ${TAPEDEV} ]; then
-    echo "${TAPEDEV} does not exist." >&2
+# Process command line arguments
+OPTS=$(getopt -o fds:D:hV --long full,delta,set:,device:,help,version -n '${PROG}' -- "$@")
+
+if [ $? -ne 0 ]; then
+    echo "Terminating..." >&2
     exit 1
 fi
 
-[ ! -d "${TARDB}" ] && mkdir -p "${TARDB}"
+eval set -- "${OPTS}"
 
+while true ; do
+    case "${1}" in
+        -f|--full)
+            TYPE="Full"
+            shift ;;
+        -d|--delta)
+            TYPE="Delta"
+            shift ;;
+        -s|--set)
+            SET="${2}"
+            shift 2 ;;
+        -D|--device)
+            TAPEDEV="${2}"
+            shift 2 ;;
+        -h|-?|--help)
+            usage
+            exit 0 ;;
+        -V|--version)
+            ver
+            exit 0 ;;
+        *)
+            echo "Invalid option: ${1}" >&2
+            exit 1 ;;
+    esac
+done
+
+# Exit if the user failed to specify a backup set
+if [ -z "${SET}" -o ! -f "${CONFDIR}/sets/${SET}.conf" ]; then
+    echo "ERROR:  The -s option is required, please specify a set." >&2
+    exit 1
+fi
+
+# Source the set configuration and extend TARDB
+. "${CONFDIR}/sets/${SET}.conf"
+TARDB="${TARDB}/${SET}"
+[ -d "${TARDB}" ] || mkdir -p "${TARDB}"
+
+# Set-specific settings
+LISTED_INCR="${TARDB}/listed-incremental.$(hostname 2>/dev/null)"
+CURR_DELTA_TAPE="${TARDB}/curr_delta_tape"
+CURR_FULL_TAPE="${TARDB}/curr_full_tape"
+
+# Determine the type if the user did not specify one
+if [ -z "${TYPE}" -a ! -f "${LISTED_INCR}" ]; then
+    TYPE="Full"
+fi
+
+# Make sure we have a tape device specified
+if [ -z "${TAPEDEV}" ]; then
+    echo "ERROR:  No tape device specified." >&2
+    exit 1
+fi
+
+if [ ! -c "${TAPEDEV}" ]; then
+    echo "ERROR:  ${TAPEDEV} is not a character device." >&2
+    exit 1
+fi
+
+# Support files
 create_new_volume_script ${TARDB}/new-volume
 rm -f ${TARDB}/start ${TARDB}/finish
 date > ${TARDB}/start
 
-if [ "${1}" = "--full" -o ! -f "${LISTED_INCR}" ]; then
-    t="Full"
+# Determine the tape to start with
+if [ "${TYPE}" = "Full" ]; then
     CURR_FILE="${CURR_FULL_TAPE}"
+
     if [ -f "${CURR_FULL_TAPE}" ]; then
         curr="$(cat ${CURR_FULL_TAPE} | tr -d "\n" | od -An -t dC)"
         max="$(echo "${MAX_FULL_VOL}" | tr -d "\n" | od -An -t dC)"
@@ -194,9 +280,9 @@ if [ "${1}" = "--full" -o ! -f "${LISTED_INCR}" ]; then
     else
         NEEDED_TAPE="${MIN_FULL_VOL}"
     fi
-else
-    t="Incremental"
+elif [ "${TYPE}" = "Delta" ]; then
     CURR_FILE="${CURR_INCR_TAPE}"
+
     if [ -f "${CURR_INCR_TAPE}" ]; then
         NEEDED_TAPE="$(expr $(cat ${CURR_INCR_TAPE}) + 1)"
     else
@@ -204,6 +290,7 @@ else
     fi
 fi
 
+# Run the backup
 stinit
 runtar ${t} ${NEEDED_TAPE}
 date > ${TARDB}/finish
