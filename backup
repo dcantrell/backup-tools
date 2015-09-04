@@ -153,15 +153,13 @@ runtar() {
     # Perform a short erase using mt.  The secret is the extra '0' argument.
     mt -f ${TAPEDEV} erase 0 || exit 1
     mt -f ${TAPEDEV} rewind || exit 1
-    ## Perform a short erase using dd.  The mt erase takes way too long.
-    #dd if=/dev/zero of=${TAPEDEV} bs=512 count=1 >/dev/null 2>&1
-    #mt -f ${TAPEDEV} rewind || exit 1
     echo "done."
 
     echo
     echo ">>> Running tar..."
     TAR="tar -c -v -M -F ${TARDB}/new-volume -f ${TAPEDEV} -g ${LISTED_INCR}"
-    TAR="${TAR} -X ${EXCLUDE_LIST} --totals=SIGUSR1 ${INCLUDES}"
+    TAR="${TAR} -X ${EXCLUDE_LIST} --exclude-backups"
+    TAR="${TAR} --totals=SIGUSR1 ${INCLUDES}"
     ((( ${TAR} 2>&1 1>&3 | tee ${TARDB}/tar.stderr ) 3>&1 1>&2 | \
         tee ${TARDB}/tar.stdout ) 2>&1 | tee ${TARDB}/tar.log ) || exit 1
     rm -f ${EXCLUDE_LIST}
