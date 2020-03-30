@@ -1,0 +1,32 @@
+Systems:
+* kevlar - Linode host
+* bnsf - My workstation at home w/ tape drive
+* csx - My laptop (I run VPN here to get to work)
+* awvr - My workstation at the office
+
+
+    +------+      +-----+      +------+
+    | awvr |----->| csx |----->| bnsf |-----> tape
+    +------+      +-----+  ^   +------+
+                           |
+               +--------+  |
+               | kevlar |--+
+               +--------+
+
+1) sync-from-awvr runs by cron on csx:
+       If awvr is reachable (meaning the VPN is up), it rsyncs
+       awvr to a backup directory on csx.
+
+2) sync-to-bnsf runs by cron on csx:
+       If bnsf is reachable (meaning networking is up), it
+       rsyncs itself to bnsf (including the awvr directory).
+
+3) sync-from-kevlar runs by cron on bnsf:
+       If kevlar is reachable (meaning it's up and we have some
+       network connectivity), it rsyncs kevlar to a backup
+       directory on bnsf.
+
+4) to-tape is invoked manually on bnsf:
+       It initializes the tape drive using /etc/stinit.def.  If
+       there is a tape in the drive, it performs a backup of
+       bnsf plus all the remote hosts that backed up to it.

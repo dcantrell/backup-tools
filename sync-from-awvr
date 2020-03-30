@@ -1,0 +1,52 @@
+#!/bin/sh
+#
+# sync-from-awvr
+# Backup data from awvr.bss.redhat.com to local system.
+#
+
+PATH=/bin:/usr/bin
+PROG="$(basename $0)"
+PROGDIR="$(dirname $(realpath $0))"
+USER="$(id -un)"
+FROMHOST=awvr.bss.redhat.com
+BACKUP=${HOME}/BACKUP/${FROMHOST}
+
+# Lock things so only one script runs at a time
+[ ! "${FLOCKER}" = "$0" ] && exec env FLOCKER="$0" flock -en "$0" "$0" "$@" || :
+
+if [ $(id -u) -eq 0 ]; then
+    echo "Do not run this script as root." >&2
+    exit 1
+fi
+
+logger -p user.info -t ${PROG} "backup started"
+
+cd ${PROGDIR}
+
+# make sure the from host is reachable
+ping -q -c 1 -w 15 ${FROMHOST} >/dev/null 2>&1
+if [ $? -ne 0 ]; then
+    logger -p user.err -t ${PROG} "unable to reach ${FROMHOST}"
+    exit 0
+fi
+
+if [ -d ${BACKUP} ]; then
+    logger -p user.info -t ${PROG} "creating ${BACKUP} directory"
+    sudo mkdir -p ${BACKUP}
+fi
+
+logger -p user.info -t ${PROG} "changing group on ${BACKUP} to 'wheel'"
+sudo chgrp wheel ${BACKUP}
+logger -p user.info -t ${PROG} "changing permissions on ${BACKUP} to g+w"
+sudo chmod g+w ${BACKUP}
+
+for d in etc home root usr/local ; do
+    dest="$(echo "${d}" | sed -e 's|\/|.|g')"
+    sudo rsync -vazX \
+        --delete --delete-excluded \
+        --ignore-errors \
+        --exclude-from=excludes.txt \
+        ${FROMHOST}:/${d}/ ${BACKUP}/${dest}/ 2>&1 | logger -p user.info -t ${PROG}
+done
+
+logger -p user.info -t ${PROG} "backup complete"

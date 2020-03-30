@@ -1,6 +1,0 @@
-#!/bin/sh
-mt -f ${TAPEDEV} eject
-echo
-echo -n "Now insert the next tape and press enter..."
-read JUNK
-mt -f ${TAPEDEV} erase 0 && mt -f ${TAPEDEV} rewind

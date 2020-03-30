@@ -1,0 +1,75 @@
+#!/bin/sh
+#
+# Quick and dirty script to sync directories on the laptop to bnsf,
+# my workstation at home.
+#
+
+PATH=/bin:/usr/bin
+PROG="$(basename $0)"
+PROGDIR="$(dirname $(realpath $0))"
+USER="$(id -un)"
+DESTHOST=bnsf.bos.burdell.org
+DESTPATH=${HOME}/BACKUP/csx.bos.burdell.org
+BACKUP_DIRS="${HOME} /etc /root /home/devel /usr/local /home/virt"
+
+# Lock things so only one script runs at a time
+[ ! "${FLOCKER}" = "$0" ] && exec env FLOCKER="$0" flock -en "$0" "$0" "$@" || :
+
+if [ $(id -u) -eq 0 ]; then
+    echo "Do not run this script as root." >&2
+    exit 1
+fi
+
+logger -p user.info -t ${PROG} "backup started"
+
+cd ${PROGDIR}
+
+# make sure the destination host is reachable
+ping -q -c 1 -w 15 ${DESTHOST} >/dev/null 2>&1
+if [ $? -ne 0 ]; then
+    logger -p user.err -t ${PROG} "unable to reach ${DESTHOST}"
+    exit 0
+fi
+
+# make sure ssh-agent has my ssh key
+ssh-add -l | grep -q "${HOME}/.ssh/id_rsa" >/dev/null 2>&1
+if [ $? -ne 0 ]; then
+    logger -p user.err -t ${PROG} "please run ssh-agent and add your ssh key with ssh-add"
+    exit 0
+fi
+
+# perform the backup
+for subdir in ${BACKUP_DIRS} ; do
+    sd="$(echo ${subdir} | sed -e 's/^\///' | sed -e 's/\//\./')"
+    targetpath="${DESTPATH}/${sd}"
+    ssh ${USER}@${DESTHOST} "[ -d ${targetpath}/ ] || mkdir -p ${targetpath}"
+    sudo rsync -av \
+        --delete --delete-excluded \
+        --ignore-errors \
+        --exclude-from=excludes.txt \
+        ${subdir}/ ${USER}@${DESTHOST}:${targetpath}/ 2>&1 | logger -p user.info -t ${PROG}
+done
+
+# iterate over directories in ~/BACKUP, sync each over to bnsf
+if [ -d "${HOME}/BACKUP" ]; then
+    logger -p user.info -t ${PROG} "backing up remote systems found in ~/BACKUP"
+
+    cd "${HOME}/BACKUP"
+
+    for backupdir in ./* ; do
+        [ -d "${backupdir}" ] || continue
+        backuphost="$(basename "${backupdir}")"
+        logger -p user.info -t ${PROG} "backing up ${backuphost}"
+        targetpath="${DESTPATH}/BACKUP/${backuphost}"
+        ssh ${USER}@${DESTHOST} "[ -d ${targetpath}/ ] || mkdir -p ${targetpath}"
+        sudo rsync -av \
+            --delete --delete-excluded \
+            --ignore-errors \
+            --exclude-from=excludes.txt \
+            ${backupdir}/ ${USER}@${DESTHOST}:${targetpath}/ 2>&1 | logger -p user.info -t ${PROG}
+    done
+
+    logger -p user.info -t ${PROG} "remote systems backup complete"
+fi
+
+logger -p user.info -t ${PROG} "backup complete"

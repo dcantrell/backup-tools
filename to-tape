@@ -1,0 +1,54 @@
+#!/bin/sh
+#
+# Back up the entire system to LTO tape
+
+# Tape device to use.  The device node names map to tape device
+# modes as defined in /etc/stinit.def.  There are 4 modes in
+# stinit and they map to device notes like this:
+#
+#     mode 1      /dev/st0
+#     mode 2      /dev/st0l
+#     mode 3      /dev/st0m
+#     mode 4      /dev/st0a
+#
+# The letters don't really make sense, but that's what they are.
+TAPEDEV="/dev/st0l"
+
+# Directories to include
+INCLUDE="/etc /root /home /usr/local /BACKUP"
+
+# File listing exclude patterns for tar (optional)
+EXCLUDE="excludes.txt"
+
+# Initialize the tape drive
+sudo stinit
+
+# DR_OPEN means there is no tape loaded
+# If we see that, just exit.
+sudo mt -f ${TAPEDEV} status | tail -n 1 | grep -q DR_OPEN >/dev/null 2>&1
+
+if [ $? -eq 0 ]; then
+    echo "Insert a tape in the drive and try again."
+    exit 0
+fi
+
+# Rewind just in case
+sudo mt -f ${TAPEDEV} rewind
+
+# NOTE:  This is a long erase and will run for hours.
+#sudo mt -f $TAPEDEV erase
+
+# Perform a short erase
+sudo dd if=/dev/zero of=${TAPEDEV} bs=512 count=1
+sudo mt -f ${TAPEDEV} rewind
+
+# Actually use tar to write to a tape drive
+EXCLUDE_OPT=
+
+if [ -f "${EXCLUDES}" ]; then
+    EXCLUDE_OPT="-X ${EXCLUDES}"
+fi
+
+sudo tar -cvf ${TAPEDEV} ${EXCLUDE_OPT} ${INCLUDE}
+sudo mt -f ${TAPEDEV} rewind
+sudo mt -f ${TAPEDEV} eject

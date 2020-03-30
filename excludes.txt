@@ -1,0 +1,10 @@
+*.o
+*.pyc
+.Trash
+.cache
+NotBackedUp
+PAGEFILE.SYS
+_PURGE
+distfiles
+lost+found
+obj
