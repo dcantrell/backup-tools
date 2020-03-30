@@ -2,9 +2,14 @@
 *.pyc
 .Trash
 .cache
+BACKUP
 NotBackedUp
 PAGEFILE.SYS
 _PURGE
 distfiles
 lost+found
 obj
+__pycache__
+.rustup
+.cabal
+.cargo
