@@ -20,6 +20,9 @@ INCLUDE="/etc /root /home /usr/local /BACKUP"
 # File listing exclude patterns for tar (optional)
 EXCLUDE="excludes.txt"
 
+# Common variables
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+
 # Initialize the tape drive
 sudo stinit
 
@@ -45,8 +48,8 @@ sudo mt -f ${TAPEDEV} rewind
 # Actually use tar to write to a tape drive
 EXCLUDE_OPT=
 
-if [ -f "${EXCLUDES}" ]; then
-    EXCLUDE_OPT="-X ${EXCLUDES}"
+if [ -f "${EXCLUDE}" ]; then
+    EXCLUDE_OPT="-X ${EXCLUDE}"
 fi
 
 sudo tar -cvf ${TAPEDEV} ${EXCLUDE_OPT} ${INCLUDE}
