@@ -15,7 +15,7 @@
 TAPEDEV="/dev/st0l"
 
 # Directories to include
-INCLUDE="/etc /root /home /usr/local /BACKUP"
+INCLUDE="/etc /root /home /usr/local"
 
 # File listing exclude patterns for tar (optional)
 EXCLUDE="excludes.txt"
