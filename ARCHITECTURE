@@ -1,4 +1,6 @@
 Systems:
+--------
+
 * kevlar - Linode host
 * bnsf - My workstation at home w/ tape drive
 * csx - My laptop (I run VPN here to get to work)
@@ -30,3 +32,19 @@ Systems:
        It initializes the tape drive using /etc/stinit.def.  If
        there is a tape in the drive, it performs a backup of
        bnsf plus all the remote hosts that backed up to it.
+
+
+Directory structure on bnsf:
+----------------------------
+
+bnsf backs up its directories primarily:
+    /etc
+    /root
+    /home
+    /usr/local
+
+This also includes /home/BACKUP which contains subdirectories per
+hostname of each included system:
+    awvr.bss.redhat.com
+    csx.bos.burdell.org
+    kevlar.burdell.org
