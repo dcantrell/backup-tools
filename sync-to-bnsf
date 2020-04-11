@@ -9,7 +9,8 @@ PROG="$(basename $0)"
 PROGDIR="$(dirname $(realpath $0))"
 USER="$(id -un)"
 DESTHOST=bnsf.bos.burdell.org
-DESTPATH=${HOME}/BACKUP/csx.bos.burdell.org
+THISHOST=csx.bos.burdell.org
+DESTPATH=/home/BACKUP
 BACKUP_DIRS="${HOME} /etc /root /home/devel /usr/local /home/virt"
 
 # Lock things so only one script runs at a time
@@ -41,12 +42,12 @@ fi
 # perform the backup
 for subdir in ${BACKUP_DIRS} ; do
     sd="$(echo ${subdir} | sed -e 's/^\///' | sed -e 's/\//\./')"
-    targetpath="${DESTPATH}/${sd}"
+    targetpath="${DESTPATH}/${THISHOST}/${sd}"
     ssh ${USER}@${DESTHOST} "[ -d ${targetpath}/ ] || mkdir -p ${targetpath}"
     sudo rsync -av \
         --delete --delete-excluded \
         --ignore-errors \
-        --exclude-from=excludes.txt \
+        --exclude-from=${PROGDIR}/excludes.txt \
         ${subdir}/ ${USER}@${DESTHOST}:${targetpath}/ 2>&1 | logger -p user.info -t ${PROG}
 done
 
@@ -60,12 +61,12 @@ if [ -d "${HOME}/BACKUP" ]; then
         [ -d "${backupdir}" ] || continue
         backuphost="$(basename "${backupdir}")"
         logger -p user.info -t ${PROG} "backing up ${backuphost}"
-        targetpath="${DESTPATH}/BACKUP/${backuphost}"
+        targetpath="${DESTPATH}/${backuphost}"
         ssh ${USER}@${DESTHOST} "[ -d ${targetpath}/ ] || mkdir -p ${targetpath}"
         sudo rsync -av \
             --delete --delete-excluded \
             --ignore-errors \
-            --exclude-from=excludes.txt \
+            --exclude-from=${PROGDIR}/excludes.txt \
             ${backupdir}/ ${USER}@${DESTHOST}:${targetpath}/ 2>&1 | logger -p user.info -t ${PROG}
     done
 
