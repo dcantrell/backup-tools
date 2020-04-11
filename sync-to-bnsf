@@ -51,6 +51,11 @@ for subdir in ${BACKUP_DIRS} ; do
         ${subdir}/ ${USER}@${DESTHOST}:${targetpath}/ 2>&1 | logger -p user.info -t ${PROG}
 done
 
+# dedupe files
+logger -p user.info -t ${PROG} "deduplicating ${DESTHOST}:${DESTPATH}/${THISHOST} using hardlink(1)"
+ssh ${USER}@${DESTHOST} hardlink -c -v ${DESTPATH}/${THISHOST}/ 2>&1 | logger -p user.info -t ${PROG}
+logger -p user.info -t ${PROG} "deduplication complete"
+
 # iterate over directories in ~/BACKUP, sync each over to bnsf
 if [ -d "${HOME}/BACKUP" ]; then
     logger -p user.info -t ${PROG} "backing up remote systems found in ~/BACKUP"

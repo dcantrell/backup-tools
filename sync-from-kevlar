@@ -9,7 +9,7 @@ PROG="$(basename $0)"
 PROGDIR="$(dirname $(realpath $0))"
 USER="$(id -un)"
 FROMHOST=kevlar.burdell.org
-BACKUP=${HOME}/BACKUP/kevlar.burdell.org
+DEST=/home/BACKUP/${FROMHOST}
 
 # Lock things so only one script runs at a time
 [ ! "${FLOCKER}" = "$0" ] && exec env FLOCKER="$0" flock -en "$0" "$0" "$@" || :
@@ -30,23 +30,27 @@ if [ $? -ne 0 ]; then
     exit 0
 fi
 
-if [ -d ${BACKUP} ]; then
-    logger -p user.info -t ${PROG} "creating ${BACKUP} directory"
-    [ -d ${BACKUP} ] || sudo mkdir -p ${BACKUP}
+if [ -d ${DEST} ]; then
+    logger -p user.info -t ${PROG} "creating ${DEST} directory"
+    [ -d ${DEST} ] || sudo mkdir -p ${DEST}
 fi
 
-logger -p user.info -t ${PROG} "changing group on ${BACKUP} to 'wheel'"
-sudo chgrp wheel ${BACKUP}
-logger -p user.info -t ${PROG} "changing permissions on ${BACKUP} to g+w"
-sudo chmod g+w ${BACKUP}
+logger -p user.info -t ${PROG} "changing group on ${DEST} to 'wheel'"
+sudo chgrp wheel ${DEST}
+logger -p user.info -t ${PROG} "changing permissions on ${DEST} to g+w"
+sudo chmod g+w ${DEST}
 
 for d in etc home srv usr/local ; do
     dest="$(echo "${d}" | sed -e 's|\/|.|g')"
     sudo rsync -vazX \
         --delete --delete-excluded \
         --ignore-errors \
-        --exclude-from=excludes.txt \
-        ${FROMHOST}:/${d}/ ${BACKUP}/${dest}/ 2>&1 | logger -p user.info -t ${PROG}
+        --exclude-from=${PROGDIR}/excludes.txt \
+        ${FROMHOST}:/${d}/ ${DEST}/${d}/ 2>&1 | logger -p user.info -t ${PROG}
 done
+
+logger -p user.info -t ${PROG} "deduplicating ${DEST} using hardlink(1)"
+hardlink -c -v ${DEST} 2>&1 | logger -p user.info -t ${PROG}
+logger -p user.info -t ${PROG} "deduplication complete"
 
 logger -p user.info -t ${PROG} "backup complete"

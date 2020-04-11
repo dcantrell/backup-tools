@@ -49,4 +49,8 @@ for d in etc home root usr/local ; do
         ${FROMHOST}:/${d}/ ${BACKUP}/${dest}/ 2>&1 | logger -p user.info -t ${PROG}
 done
 
+logger -p user.info -t ${PROG} "deduplicating ${DEST} using hardlink(1)"
+hardlink -c -v ${BACKUP}/ 2>&1 | logger -p user.info -t ${PROG}
+logger -p user.info -t ${PROG} "deduplication complete"
+
 logger -p user.info -t ${PROG} "backup complete"
