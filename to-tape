@@ -22,6 +22,9 @@ EXCLUDE="excludes.txt"
 
 # Common variables
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
+PROG="$(basename $0)"
+TMPDIR="$(mktemp -d -p /var/tmp -t ${PROG}.XXXXXX)"
+trap EXIT 'rm -rf ${TMPDIR}'
 
 # Initialize the tape drive
 sudo stinit
@@ -52,6 +55,9 @@ if [ -f "${EXCLUDE}" ]; then
     EXCLUDE_OPT="-X ${EXCLUDE}"
 fi
 
-sudo tar -cvf ${TAPEDEV} ${EXCLUDE_OPT} ${INCLUDE}
+sudo tar -c -v -f ${TAPEDEV} --totals ${EXCLUDE_OPT} ${INCLUDE} 2>&1 | tee ${TMPDIR}/tar.log
 sudo mt -f ${TAPEDEV} rewind
 sudo mt -f ${TAPEDEV} eject
+
+# Report backup size
+grep "^Total bytes written:" ${TMPDIR}/tar.log | rev | cut -d ' ' -f 1 | rev | awk '{ printf "%.2f GB written to tape\n", $1/1024/1024/1024; }'
