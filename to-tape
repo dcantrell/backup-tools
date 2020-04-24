@@ -24,7 +24,7 @@ EXCLUDE="excludes.txt"
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
 PROG="$(basename $0)"
 TMPDIR="$(mktemp -d -p /var/tmp -t ${PROG}.XXXXXX)"
-trap EXIT 'rm -rf ${TMPDIR}'
+trap 'rm -rf "${TMPDIR}"' EXIT
 
 # Initialize the tape drive
 sudo stinit
