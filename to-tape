@@ -14,6 +14,10 @@
 # The letters don't really make sense, but that's what they are.
 TAPEDEV="/dev/st0l"
 
+# Total tape size in gigabytes.  Be sure to match the size to the mode
+# in use, which may call for a 2:1 compression reporting.
+TOTAL_SIZE="1600"
+
 # Directories to include
 INCLUDE="/etc /root /home /usr/local"
 
@@ -60,4 +64,7 @@ sudo mt -f ${TAPEDEV} rewind
 sudo mt -f ${TAPEDEV} eject
 
 # Report backup size
-grep "^Total bytes written:" ${TMPDIR}/tar.log | rev | cut -d ' ' -f 1 | rev | awk '{ printf "%.2f GB written to tape\n", $1/1024/1024/1024; }'
+SIZE_WRITTEN=$(grep "^Total bytes written:" ${TMPDIR}/tar.log | rev | cut -d ' ' -f 1 | rev | awk '{ printf "%.2f", $1/1024/1024/1024; }')
+REMAINING="$(echo "scale=2; ((${TOTAL_SIZE}-${SIZE_WRITTEN})/${TOTAL_SIZE})*100.00" | bc)"
+echo "${SIZE_WRITTEN} GB written to tape."
+echo "You still have ${REMAINING}% of a backup tape remaining."
