@@ -27,8 +27,7 @@ EXCLUDE="excludes.txt"
 # Common variables
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
 PROG="$(basename $0)"
-TMPDIR="$(mktemp -d -p /var/tmp -t ${PROG}.XXXXXX)"
-trap 'rm -rf "${TMPDIR}"' EXIT
+TOOLSDIR="$(dirname $(realpath $0))"
 
 # Initialize the tape drive
 sudo stinit
@@ -59,12 +58,12 @@ if [ -f "${EXCLUDE}" ]; then
     EXCLUDE_OPT="-X ${EXCLUDE}"
 fi
 
-sudo tar -c -v -f ${TAPEDEV} --totals ${EXCLUDE_OPT} ${INCLUDE} 2>&1 | tee ${TMPDIR}/tar.log
+sudo tar -c -v -f ${TAPEDEV} --totals ${EXCLUDE_OPT} ${INCLUDE} 2>&1 | tee ${TOOLSDIR}/tar.log
 sudo mt -f ${TAPEDEV} rewind
 sudo mt -f ${TAPEDEV} eject
 
 # Report backup size
-SIZE_WRITTEN=$(grep "^Total bytes written:" ${TMPDIR}/tar.log | rev | cut -d ' ' -f 1 | rev | awk '{ printf "%.2f", $1/1024/1024/1024; }')
+SIZE_WRITTEN=$(grep "^Total bytes written:" ${TOOLSDIR}/tar.log | rev | cut -d ' ' -f 1 | rev | awk '{ printf "%.2f", $1/1024/1024/1024; }')
 REMAINING="$(echo "scale=2; ((${TOTAL_SIZE}-${SIZE_WRITTEN})/${TOTAL_SIZE})*100.00" | bc)"
 echo "${SIZE_WRITTEN} GB written to tape."
 echo "You still have ${REMAINING}% of a backup tape remaining."
