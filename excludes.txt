@@ -6,6 +6,7 @@
 .cargo
 .ccache
 .rustup
+/home/BACKUP
 NotBackedUp
 PAGEFILE.SYS
 _PURGE
