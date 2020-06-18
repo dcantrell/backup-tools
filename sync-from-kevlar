@@ -42,6 +42,7 @@ sudo chmod g+w ${DEST}
 
 for d in etc home srv usr/local ; do
     dest="$(echo "${d}" | sed -e 's|\/|.|g')"
+    [ -d ${DEST}/${d} ] || mkdir -p ${DEST}/${d}
     sudo rsync -vazX \
         --delete --delete-excluded \
         --ignore-errors \

@@ -9,7 +9,7 @@ PROG="$(basename $0)"
 PROGDIR="$(dirname $(realpath $0))"
 USER="$(id -un)"
 FROMHOST=awvr.bss.redhat.com
-BACKUP=${HOME}/BACKUP/${FROMHOST}
+BACKUP=/home/BACKUP/${FROMHOST}
 
 # Lock things so only one script runs at a time
 [ ! "${FLOCKER}" = "$0" ] && exec env FLOCKER="$0" flock -en "$0" "$0" "$@" || :
@@ -42,6 +42,7 @@ sudo chmod g+w ${BACKUP}
 
 for d in etc home root usr/local ; do
     dest="$(echo "${d}" | sed -e 's|\/|.|g')"
+    [ -d ${BACKUP}/${dest} ] || mkdir -p ${BACKUP}/${dest}
     sudo rsync -vazX \
         --delete --delete-excluded \
         --ignore-errors \

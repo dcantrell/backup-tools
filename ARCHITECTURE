@@ -6,18 +6,21 @@ Systems:
 * csx - My laptop (I run VPN here to get to work)
 * awvr - My workstation at the office
 
-
-    +------+      +-----+      +------+
-    | awvr |----->| csx |----->| bnsf |-----> tape
-    +------+      +-----+  ^   +------+
+                 +------+
+                 | awvr |--+
+                 +------+  |
+                           |
+                  +-----+  |   +------+
+                  | csx |----->| bnsf |-----> tape
+                  +-----+  ^   +------+
                            |
                +--------+  |
                | kevlar |--+
                +--------+
 
-1) sync-from-awvr runs by cron on csx:
+1) sync-from-awvr runs by cron on bnsf:
        If awvr is reachable (meaning the VPN is up), it rsyncs
-       awvr to a backup directory on csx.
+       awvr to a backup directory on bnsf.
 
 2) sync-to-bnsf runs by cron on csx:
        If bnsf is reachable (meaning networking is up), it
