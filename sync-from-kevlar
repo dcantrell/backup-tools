@@ -40,7 +40,7 @@ sudo chgrp wheel ${DEST}
 logger -p user.info -t ${PROG} "changing permissions on ${DEST} to g+w"
 sudo chmod g+w ${DEST}
 
-for d in etc home srv usr/local ; do
+for d in etc home srv usr/local var ; do
     dest="$(echo "${d}" | sed -e 's|\/|.|g')"
     [ -d ${DEST}/${d} ] || mkdir -p ${DEST}/${d}
     sudo rsync -vazX \

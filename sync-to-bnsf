@@ -11,7 +11,7 @@ USER="$(id -un)"
 DESTHOST=bnsf.bos.burdell.org
 THISHOST=csx.bos.burdell.org
 DESTPATH=/home/BACKUP
-BACKUP_DIRS="${HOME} /etc /root /home/devel /usr/local /home/virt"
+BACKUP_DIRS="${HOME} /etc /root /home/devel /usr/local /home/virt /var"
 
 # Lock things so only one script runs at a time
 [ ! "${FLOCKER}" = "$0" ] && exec env FLOCKER="$0" flock -en "$0" "$0" "$@" || :

@@ -40,7 +40,7 @@ sudo chgrp wheel ${BACKUP}
 logger -p user.info -t ${PROG} "changing permissions on ${BACKUP} to g+w"
 sudo chmod g+w ${BACKUP}
 
-for d in etc home root usr/local ; do
+for d in etc home root usr/local var ; do
     dest="$(echo "${d}" | sed -e 's|\/|.|g')"
     [ -d ${BACKUP}/${dest} ] || mkdir -p ${BACKUP}/${dest}
     sudo rsync -vazX \

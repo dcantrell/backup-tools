@@ -1,3 +1,6 @@
+#
+# General purpose excludes.  These are matched to the end of origin paths.
+#
 *.o
 *.pyc
 .Trash
@@ -6,7 +9,6 @@
 .cargo
 .ccache
 .rustup
-/home/BACKUP
 NotBackedUp
 PAGEFILE.SYS
 _PURGE
@@ -14,3 +16,12 @@ __pycache__
 distfiles
 lost+found
 obj
+
+# These directories are rooted in /home on origin systems.
+/BACKUP/
+
+# These directories are rooted in /var on origin systems.
+/cache/
+/lib/mock/
+/tmp/
+/lib/flatpak/
