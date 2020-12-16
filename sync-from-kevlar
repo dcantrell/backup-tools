@@ -40,7 +40,7 @@ sudo chgrp wheel ${DEST}
 logger -p user.info -t ${PROG} "changing permissions on ${DEST} to g+w"
 sudo chmod g+w ${DEST}
 
-for d in etc home srv usr/local var ; do
+for d in boot etc home opt root srv usr var ; do
     dest="$(echo "${d}" | sed -e 's|\/|.|g')"
     [ -d ${DEST}/${d} ] || mkdir -p ${DEST}/${d}
     sudo rsync -vazX \
@@ -49,6 +49,8 @@ for d in etc home srv usr/local var ; do
         --exclude-from=${PROGDIR}/excludes.txt \
         ${FROMHOST}:/${d}/ ${DEST}/${d}/ 2>&1 | logger -p user.info -t ${PROG}
 done
+
+sudo scp -pv ${FROMHOST}/aquota* ${DEST}/ 2>&1 | logger -p user.info -t ${PROG}
 
 logger -p user.info -t ${PROG} "deduplicating ${DEST} using hardlink(1)"
 sudo hardlink -c -v ${DEST} 2>&1 | logger -p user.info -t ${PROG}
