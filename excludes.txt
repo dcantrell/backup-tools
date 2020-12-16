@@ -17,6 +17,9 @@ distfiles
 lost+found
 obj
 
+# These directories are rooted in /srv on origin systems.
+/ftp/pub/
+
 # These directories are rooted in /home on origin systems.
 /BACKUP/
 
