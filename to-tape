@@ -19,7 +19,7 @@ TAPEDEV="/dev/st0l"
 TOTAL_SIZE="1600"
 
 # Directories to include
-INCLUDE="/etc /root /home /usr/local"
+INCLUDE="/etc /root /home /projects /usr/local /var"
 
 # File listing exclude patterns for tar (optional)
 EXCLUDE="excludes.txt"
@@ -64,6 +64,7 @@ sudo mt -f ${TAPEDEV} eject
 
 # Report backup size
 SIZE_WRITTEN=$(grep "^Total bytes written:" ${TOOLSDIR}/tar.log | rev | cut -d ' ' -f 1 | rev | awk '{ printf "%.2f", $1/1024/1024/1024; }')
-REMAINING="$(echo "scale=2; ((${TOTAL_SIZE}-${SIZE_WRITTEN})/${TOTAL_SIZE})*100.00" | bc)"
+USED=$(echo "scale=2; ((${TOTAL_SIZE}-${SIZE_WRITTEN})/${TOTAL_SIZE})*100.00" | bc)
+REMAINING=$(echo "scale=2; 100 - ${USED}" | bc)
 echo "${SIZE_WRITTEN} GB written to tape."
 echo "You still have ${REMAINING}% of a backup tape remaining."
