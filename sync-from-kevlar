@@ -30,9 +30,9 @@ if [ $? -ne 0 ]; then
     exit 0
 fi
 
-if [ -d ${DEST} ]; then
+if [ ! -d ${DEST} ]; then
     logger -p user.info -t ${PROG} "creating ${DEST} directory"
-    [ -d ${DEST} ] || sudo mkdir -p ${DEST}
+    sudo mkdir -p ${DEST}
 fi
 
 logger -p user.info -t ${PROG} "changing group on ${DEST} to 'wheel'"
