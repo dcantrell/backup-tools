@@ -1,0 +1,57 @@
+#!/bin/sh
+#
+# sync-from-adhole
+# Backup data from adhole.bos.burdell.org to local system.
+#
+
+PATH=/bin:/usr/bin
+PROG="$(basename $0)"
+PROGDIR="$(dirname $(realpath $0))"
+USER="$(id -un)"
+FROMHOST=adhole.bos.burdell.org
+DEST=/home/BACKUP/${FROMHOST}
+
+# Lock things so only one script runs at a time
+[ ! "${FLOCKER}" = "$0" ] && exec env FLOCKER="$0" flock -en "$0" "$0" "$@" || :
+
+if [ $(id -u) -eq 0 ]; then
+    echo "Do not run this script as root." >&2
+    exit 1
+fi
+
+logger -p user.info -t ${PROG} "backup started"
+
+cd ${PROGDIR}
+
+# make sure the from host is reachable
+ping -q -c 1 -w 15 ${FROMHOST} >/dev/null 2>&1
+if [ $? -ne 0 ]; then
+    logger -p user.err -t ${PROG} "unable to reach ${FROMHOST}"
+    exit 0
+fi
+
+if [ ! -d ${DEST} ]; then
+    logger -p user.info -t ${PROG} "creating ${DEST} directory"
+    sudo mkdir -p ${DEST}
+fi
+
+logger -p user.info -t ${PROG} "changing group on ${DEST} to 'wheel'"
+sudo chgrp wheel ${DEST}
+logger -p user.info -t ${PROG} "changing permissions on ${DEST} to g+w"
+sudo chmod g+w ${DEST}
+
+for d in bin boot etc home lib media mnt opt root run sbin srv tmp usr var ; do
+    dest="$(echo "${d}" | sed -e 's|\/|.|g')"
+    [ -d ${DEST}/${d} ] || mkdir -p ${DEST}/${d}
+    sudo rsync -vazX \
+        --delete --delete-excluded \
+        --ignore-errors \
+        --exclude-from=${PROGDIR}/excludes.txt \
+        ${FROMHOST}:/${d}/ ${DEST}/${d}/ 2>&1 | logger -p user.info -t ${PROG}
+done
+
+logger -p user.info -t ${PROG} "deduplicating ${DEST} using hardlink(1)"
+sudo hardlink -c -v ${DEST} 2>&1 | logger -p user.info -t ${PROG}
+logger -p user.info -t ${PROG} "deduplication complete"
+
+logger -p user.info -t ${PROG} "backup complete"

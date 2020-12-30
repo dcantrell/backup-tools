@@ -8,3 +8,6 @@ MAILTO=
 
 # backup kevlar.burdell.org to local system (every 4 hours on the 30 minute mark)
 30 */4 * * * /home/dcantrell/backup-tools/sync-from-kevlar
+
+# backup adhole.bos.burdell.org weekly
+40 4 * * Mon /home/dcantrell/backup-tools/sync-from-adhole
