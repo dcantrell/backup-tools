@@ -3,11 +3,11 @@ MAILTO=
 # backup laptop to bnsf.bos.burdell.org (every 4 hours on the 15 minute mark)
 15 */4 * * * /home/dcantrell/backup-tools/sync-to-bnsf
 
-# backup RHT workstation to bnsf.bos.burdell.org (every 4 hours on the 45 minute mark)
-45 */4 * * * /home/dcantrell/backup-tools/sync-from-awvr
+# backup RHT workstation to bnsf.bos.burdell.org (daily at 3:45 AM)
+45 3 * * * /home/dcantrell/backup-tools/sync-from-awvr
 
-# backup kevlar.burdell.org to local system (every 4 hours on the 30 minute mark)
-30 */4 * * * /home/dcantrell/backup-tools/sync-from-kevlar
+# backup kevlar.burdell.org to local system (daily at 4:30 AM)
+30 4 * * * /home/dcantrell/backup-tools/sync-from-kevlar
 
-# backup adhole.bos.burdell.org weekly
-40 4 * * Mon /home/dcantrell/backup-tools/sync-from-adhole
+# backup adhole.bos.burdell.org weekly (Monday at 5:40 AM)
+40 5 * * Mon /home/dcantrell/backup-tools/sync-from-adhole
