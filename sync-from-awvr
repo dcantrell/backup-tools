@@ -50,7 +50,7 @@ for d in etc home root usr/local var ; do
         ${FROMHOST}:/${d}/ ${BACKUP}/${dest}/ 2>&1 | logger -p user.info -t ${PROG}
 done
 
-logger -p user.info -t ${PROG} "deduplicating ${DEST} using hardlink(1)"
+logger -p user.info -t ${PROG} "deduplicating ${FROMHOST} using hardlink(1)"
 sudo hardlink -c -v ${BACKUP}/ 2>&1 | logger -p user.info -t ${PROG}
 logger -p user.info -t ${PROG} "deduplication complete"
 
