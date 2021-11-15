@@ -8,11 +8,15 @@
 #
 #     mode 1      /dev/st0
 #     mode 2      /dev/st0l
-#     mode 3      /dev/st0m
-#     mode 4      /dev/st0a
+#     mode 3      /dev/st0m [unused]
+#     mode 4      /dev/st0a [unused]
+#
+# There are corresponding /dev/nstN[?] devices as well, which is what
+# we use because those refer to the non-automatic-rewinding tape
+# devices.
 #
 # The letters don't really make sense, but that's what they are.
-TAPEDEV="/dev/st0l"
+TAPEDEV="/dev/nst0"
 
 # Total tape size in gigabytes.  Be sure to match the size to the mode
 # in use, which may call for a 2:1 compression reporting.
@@ -31,6 +35,7 @@ TOOLSDIR="$(dirname $(realpath $0))"
 
 # Initialize the tape drive
 sudo stinit
+sudo mt -f ${TAPEDEV} compression 1
 
 # DR_OPEN means there is no tape loaded
 # If we see that, just exit.
@@ -58,6 +63,7 @@ if [ -f "${EXCLUDE}" ]; then
     EXCLUDE_OPT="-X ${EXCLUDE}"
 fi
 
+# This uses tar(1) from the libarchive project, not GNU tar.
 sudo tar -c -v -f ${TAPEDEV} --totals ${EXCLUDE_OPT} ${INCLUDE} 2>&1 | tee ${TOOLSDIR}/tar.log
 sudo mt -f ${TAPEDEV} rewind
 sudo mt -f ${TAPEDEV} eject
