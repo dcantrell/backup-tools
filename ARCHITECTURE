@@ -16,11 +16,8 @@ Systems:
                            |
                +--------+  |
                | kevlar |--+
-               +--------+  |
-                           ^
-               +--------+  |
-               | adhole |--+
                +--------+
+
 
 1) sync-from-awvr runs by cron on bnsf:
        If awvr is reachable (meaning the VPN is up), it rsyncs
@@ -34,11 +31,6 @@ Systems:
        If kevlar is reachable (meaning it's up and we have some
        network connectivity), it rsyncs kevlar to a backup
        directory on bnsf.
-
-4) sync-from-adhole runs by cron on bnsf:
-       If adhole is reachable (meaning it's up and we have some
-       network connectivity), it rsyncs adhole to a backup directory
-       on bnsf.
 
 4) to-tape is invoked manually on bnsf:
        It initializes the tape drive using /etc/stinit.def.  If
@@ -62,4 +54,3 @@ hostname of each included system:
     awvr.bss.redhat.com
     csx.bos.burdell.org
     kevlar.burdell.org
-    adhole.bos.burdell.org
